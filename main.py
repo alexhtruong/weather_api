@@ -1,8 +1,11 @@
 import requests
+import os
+from twilio.rest import Client
 
-
-api_key = "597526efbae0aca1aa4940817bff913c"
+api_key = os.environ.get("OWM_API_KEY")
 OWM_endpoint = "https://api.openweathermap.org/data/2.5/onecall"
+account_sid = "AC82dd3d30de616f9259c8ceb228cdf0b9"
+auth_token = os.environ.get("AUTH_TOKEN")
 
 parameters = {
     "lat": 37.323,
@@ -16,14 +19,20 @@ response.raise_for_status()
 data = response.json()
 weather_codes = []
 data_slice = data['hourly'][:12]
+will_rain = True
 
-i = 0
 for hour in data_slice:
-    weather_id = hour['weather'][0]['id']
-    if weather_id < 900:
-        weather_codes.append(weather_id)
-        print(f"Hour {i}: Bring an umbrella")
-    i += 1
+    condition_code = hour["weather"][0]["id"]
+    if int(condition_code) < 700:
+        will_rain = True
 
-print(weather_codes)
-print(data['hourly'][0]['weather'][0]['id'])
+if will_rain:
+    client = Client(account_sid, auth_token)
+    message = client.messages.create(
+        body="It's going to rain today. Remember to bring an umbrella ☔",
+        from_='+18449983839',
+        to='+14086104838',
+    )
+
+    print(message.status)
+
